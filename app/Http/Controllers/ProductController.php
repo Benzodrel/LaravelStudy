@@ -3,34 +3,29 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ProductRepository;
-use App\Service\ProductService;
+use App\Models\Product;
 
 class ProductController extends Controller
 {
     public function indexAction()
     {
-        $repository = new ProductRepository();
-        $products = $repository->getAll();
+        $products = Product::all()->toArray();
 
         return view('products', ['products' =>$products]);
     }
 
     public function createProductAction(Request $request)
     {
-        $id = $request->input('id');
         $name = $request->input('name');
         $price = $request->input('price');
 
         // валидация
-        if (!$id || !$name || !$price) {
-            return $this->renderError('Fill all forms');
-        }
+        $request ->validate(['name' =>'required|max:255|unique:products', 'price' => 'required|numeric|int']);
+        $product = new Product;
+        $product->name = $name;
+        $product->price = $price;
 
-        $repository = new ProductRepository();
-        $service = new ProductService($repository);
-
-        if (!$service->create($id, $name, $price)) {
+        if (!$product->save()) {
             return $this->renderError('OOPS ERROR');
         }
 
@@ -45,17 +40,14 @@ class ProductController extends Controller
 
     public function showDeleteOrUpdateFormAction()
     {
-        $repository = new ProductRepository();
-        $products = $repository->getAll();
+        $products = Product::all()->toArray();
         return view('delete_and_update_form', ['products' =>$products]);
     }
 
     public function deleteProductAction(Request $request)
     {
         $id = $request->input('id');
-        $repository = new ProductRepository();
-        $service = new ProductService($repository);
-        $service->delete($id);
+        Product::destroy($id);
         return redirect()->route('update_form');
     }
 
@@ -64,9 +56,16 @@ class ProductController extends Controller
         $id = $request->input('id');
         $name = $request->input('name');
         $price = $request->input('price');
-        $repository = new ProductRepository();
-        $service = new ProductService($repository);
-        $service->update($id, $name, $price);
+        $product = Product::find($id);
+        if ($product->name = $name) {
+            $request->validate(['price' => 'required|numeric|int']);
+        } else {
+            $request->validate(['name' => 'required|max:255|unique:products', 'price' => 'required|numeric|int']);
+        }
+        $product->name = $name;
+        $product->price = $price;
+        $product->save();
+
         return redirect()->route('update_form');
 
     }
