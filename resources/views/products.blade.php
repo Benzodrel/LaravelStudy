@@ -7,8 +7,8 @@
 <body>
 @foreach ($products as $product)
     <div>
-        <h3>{{$product->getName() }}</h3>
-        <p> {{ $product->getPrice() }}</p>
+        <h3>{{$product['name'] }}</h3>
+        <p> {{ $product['price'] }}</p>
     </div>>
 @endforeach
 
